@@ -22,7 +22,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-public class WordNetUtils {
+public class WordNetUtils implements Runnable {
 
 	public static final String BASE_GOOD_WORDNET_LINK = "http://viet.wordnet.vn/wnms/visualize/xml/1699-1699-14444";
 	public static final String BASE_BAD_WORDNET_LINK = "http://viet.wordnet.vn/wnms/visualize/xml/1699-1699-3578";
@@ -337,32 +337,29 @@ public class WordNetUtils {
 
 	static int count = 0;
 
-	private class Task implements Runnable {
-
-		@Override
-		public void run() {
-			if (type == Type.GOOD || type == Type.FAST || type == Type.NICE) {
-				getSimilarityWord(type);
-			}
-			if (type == Type.BAD || type == Type.SLOW || type == Type.UGLY) {
-				getAntonymyWord(type);
-			}
+	@Override
+	public void run() {
+		if (type == Type.GOOD || type == Type.FAST || type == Type.NICE) {
+			getSimilarityWord(type);
+		}
+		if (type == Type.BAD || type == Type.SLOW || type == Type.UGLY) {
+			getAntonymyWord(type);
 		}
 	}
 
 	public static void main(String[] args) {
-		// WordNetUtils utils = new WordNetUtils();
+		WordNetUtils utils = new WordNetUtils();
 
 		Type[] types = { Type.GOOD, Type.BAD, Type.FAST, Type.SLOW, Type.NICE, Type.UGLY };
 
+		ExecutorService service = Executors.newFixedThreadPool(6);
 		for (Type t : types) {
-			ExecutorService service = Executors.newFixedThreadPool(1);
+
 			try {
 				service.submit(new Callable<String>() {
 
 					@Override
 					public String call() throws Exception {
-						WordNetUtils utils = new WordNetUtils();
 
 						if (t == Type.GOOD || t == Type.FAST || t == Type.NICE) {
 							System.out.println(count++);
@@ -376,14 +373,8 @@ public class WordNetUtils {
 					}
 				}).get(10, TimeUnit.SECONDS);
 			} catch (InterruptedException e) {
-				System.out.println("Stop 1");
-				service.shutdownNow();
 			} catch (ExecutionException e) {
-				System.out.println("Stop 2");
-				service.shutdownNow();
 			} catch (TimeoutException e) {
-				System.out.println("Stop 3");
-				service.shutdownNow();
 			}
 
 		}
