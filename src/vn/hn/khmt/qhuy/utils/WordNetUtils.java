@@ -6,14 +6,11 @@ import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -53,21 +50,67 @@ public class WordNetUtils implements Runnable {
 	private FileWriter writerPositive, writerNegative;
 	private BufferedWriter bufferedWriterPositive, bufferedWriterNegative;
 
-	private Type type;
+	private Type type1, type2;
 
 	public WordNetUtils() {
-		this(BASE_GOOD_WORDNET_LINK, BASE_BAD_WORDNET_LINK);
+		this(Type.GOOD, Type.BAD);
 	}
 
-	private WordNetUtils(String positiveLink, String negativeLink) {
+	private WordNetUtils(Type positiveType, Type negativeType) {
+
+		// // Init list
+		// wordnetForPositive = new ArrayList<>();
+		// wordnetForNegative = new ArrayList<>();
+		//
+		// // Default link
+		// good_word_wordnet_link = positiveLink;
+		// bad_word_wordnet_link = negativeLink;
+		//
+		// // init for write output wordnet file
+		// try {
+		// writerPositive = new FileWriter(new File(POSITIVE_WORDNET_FILE));
+		// bufferedWriterPositive = new BufferedWriter(writerPositive);
+		//
+		// writerNegative = new FileWriter(new File(NEGATIVE_WORDNET_FILE));
+		// bufferedWriterNegative = new BufferedWriter(writerNegative);
+		// } catch (FileNotFoundException e) {
+		// e.printStackTrace();
+		// } catch (IOException e) {
+		// e.printStackTrace();
+		// }
+		//
+		// // Get default url to
+		// // load data for good word
+		// setUrlSource();
+
+		setSourceType(positiveType, negativeType);
+	}
+
+	public void setSourceType(Type positiveType, Type negativeType) {
 
 		// Init list
 		wordnetForPositive = new ArrayList<>();
 		wordnetForNegative = new ArrayList<>();
 
-		// Default link
-		good_word_wordnet_link = positiveLink;
-		bad_word_wordnet_link = negativeLink;
+		if (Type.FAST.equals(positiveType)) {
+			good_word_wordnet_link = BASE_FAST_WORDNET_LINK;
+		} else if (Type.NICE.equals(positiveType)) {
+			good_word_wordnet_link = BASE_NICE_WORDNET_LINK;
+		} else {
+			good_word_wordnet_link = BASE_GOOD_WORDNET_LINK;
+		}
+
+		type1 = positiveType;
+
+		if (Type.SLOW.equals(negativeType)) {
+			bad_word_wordnet_link = BASE_SLOW_WORDNET_LINK;
+		} else if (Type.UGLY.equals(negativeType)) {
+			bad_word_wordnet_link = BASE_UGLY_WORDNET_LINK;
+		} else {
+			bad_word_wordnet_link = BASE_BAD_WORDNET_LINK;
+		}
+
+		type2 = negativeType;
 
 		// init for write output wordnet file
 		try {
@@ -98,15 +141,15 @@ public class WordNetUtils implements Runnable {
 		}
 	}
 
-	private String getWordNetBodyLink(Type type) {
-		if (type == Type.GOOD || type == Type.FAST || type == Type.NICE) {
-			return documentForGood.select("pre[class=brush: xml]").text();
-		}
-		if (type == Type.BAD || type == Type.SLOW || type == Type.UGLY) {
-			return documentForBad.select("pre[class=brush: xml]").text();
-		}
-		return BLANK;
-	}
+//	private String getWordNetBodyLink() {
+//		if (type1 == Type.GOOD || type1 == Type.FAST || type1 == Type.NICE) {
+//			return documentForGood.select("pre[class=brush: xml]").text();
+//		}
+//		if (type2 == Type.BAD || type2 == Type.SLOW || type2 == Type.UGLY) {
+//			return documentForBad.select("pre[class=brush: xml]").text();
+//		}
+//		return BLANK;
+//	}
 
 	private String getUnscapeCharLink(String link) {
 		String linkRemoveLT = link.replaceAll("&lt;", "<");
@@ -115,8 +158,8 @@ public class WordNetUtils implements Runnable {
 		return linkRemoveQuot;
 	}
 
-	private List<Word> getSimilarityWordList(Type type) {
-		String links = getWordNetBodyLink(type);
+	private List<Word> getSimilarityWordList() {
+		String links = documentForGood.select("pre[class=brush: xml]").text();
 		String unscapeCharLink = getUnscapeCharLink(links);
 
 		documentForGood = Jsoup.parse(unscapeCharLink);
@@ -166,8 +209,8 @@ public class WordNetUtils implements Runnable {
 		return similarityWordList;
 	};
 
-	private List<Word> getAntonymyWordList(Type type) {
-		String links = getWordNetBodyLink(type);
+	private List<Word> getAntonymyWordList() {
+		String links = documentForBad.select("pre[class=brush: xml]").text();
 		String unscapeCharLink = getUnscapeCharLink(links);
 
 		documentForBad = Jsoup.parse(unscapeCharLink);
@@ -251,10 +294,10 @@ public class WordNetUtils implements Runnable {
 		return null;
 	}
 
-	private List<Word> getSimilarityWord(Type type) {
+	private List<Word> getSimilarityWord() {
 
 		// Get default word
-		List<Word> similarityWordList = getSimilarityWordList(type);
+		List<Word> similarityWordList = getSimilarityWordList();
 		wordnetForPositive.addAll(similarityWordList);
 		writeFile(similarityWordList, true);
 
@@ -263,7 +306,7 @@ public class WordNetUtils implements Runnable {
 			if (SIMILARITY_LABEL.equalsIgnoreCase(neirborWord.getType())) {
 				good_word_wordnet_link = neirborWord.getLink();
 				setUrlSource();
-				List<Word> similarityWordListNeibor = getSimilarityWordList(type);
+				List<Word> similarityWordListNeibor = getSimilarityWordList();
 				wordnetForPositive.addAll(similarityWordListNeibor);
 				writeFile(similarityWordListNeibor, true);
 				neirborWord = getSimilarityNeiborWord();
@@ -272,10 +315,10 @@ public class WordNetUtils implements Runnable {
 		return wordnetForPositive;
 	}
 
-	private List<Word> getAntonymyWord(Type type) {
+	private List<Word> getAntonymyWord() {
 
 		// Get default word
-		List<Word> antonymyWordList = getAntonymyWordList(type);
+		List<Word> antonymyWordList = getAntonymyWordList();
 		wordnetForNegative.addAll(antonymyWordList);
 		writeFile(antonymyWordList, false);
 
@@ -284,7 +327,7 @@ public class WordNetUtils implements Runnable {
 			if (SIMILARITY_LABEL.equalsIgnoreCase(neirborWord.getType())) {
 				bad_word_wordnet_link = neirborWord.getLink();
 				setUrlSource();
-				List<Word> antonymyWordListNeibor = getAntonymyWordList(type);
+				List<Word> antonymyWordListNeibor = getAntonymyWordList();
 				wordnetForNegative.addAll(antonymyWordListNeibor);
 				writeFile(antonymyWordListNeibor, false);
 				neirborWord = getAntonymyNeiborWord();
@@ -327,60 +370,82 @@ public class WordNetUtils implements Runnable {
 		}
 	}
 
-	public Type getType() {
-		return type;
-	}
-
-	public void setType(Type type) {
-		this.type = type;
-	}
-
 	static int count = 0;
 
 	@Override
 	public void run() {
-		if (type == Type.GOOD || type == Type.FAST || type == Type.NICE) {
-			getSimilarityWord(type);
-		}
-		if (type == Type.BAD || type == Type.SLOW || type == Type.UGLY) {
-			getAntonymyWord(type);
-		}
+
+		Thread t1 = new Thread(new Runnable() {
+
+			@Override
+			public void run() {
+				getSimilarityWord();
+			}
+		});
+
+		Thread t2 = new Thread(new Runnable() {
+
+			@Override
+			public void run() {
+				getAntonymyWord();
+			}
+		});
+		
+		t1.start();
+		t2.start();
+
 	}
 
 	public static void main(String[] args) {
-		WordNetUtils utils = new WordNetUtils();
+		// WordNetUtils utils = new WordNetUtils();
+		//
+		// Type[] types = { Type.GOOD, Type.BAD, Type.FAST, Type.SLOW, Type.NICE,
+		// Type.UGLY };
+		//
+		// ExecutorService service = Executors.newFixedThreadPool(6);
+		// for (Type t : types) {
+		//
+		// try {
+		// service.submit(new Callable<String>() {
+		//
+		// @Override
+		// public String call() throws Exception {
+		//
+		// if (t == Type.GOOD || t == Type.FAST || t == Type.NICE) {
+		// System.out.println(count++);
+		// utils.getSimilarityWord(t);
+		// }
+		// if (t == Type.BAD || t == Type.SLOW || t == Type.UGLY) {
+		// System.out.println(count++);
+		// utils.getAntonymyWord(t);
+		// }
+		// return "OK";
+		// }
+		// }).get(10, TimeUnit.SECONDS);
+		// } catch (InterruptedException e) {
 
-		Type[] types = { Type.GOOD, Type.BAD, Type.FAST, Type.SLOW, Type.NICE, Type.UGLY };
+		// } catch (ExecutionException e) {
+		// } catch (TimeoutException e) {
+		// }
+		//
+		// }
+		//
+		// // List<Word> p = utils.getSimilarityWord(Type.GOOD);
+		// // List<Word> n = utils.getAntonymyWord(Type.BAD);
 
-		ExecutorService service = Executors.newFixedThreadPool(6);
-		for (Type t : types) {
+		WordNetUtils utils1 = new WordNetUtils(Type.GOOD, Type.BAD);
+		WordNetUtils utils2 = new WordNetUtils(Type.FAST, Type.SLOW);
+		WordNetUtils utils3 = new WordNetUtils(Type.NICE, Type.UGLY);
 
-			try {
-				service.submit(new Callable<String>() {
+		Thread t1, t2, t3;
+		t1 = new Thread(utils1);
+		t2 = new Thread(utils2);
+		t3 = new Thread(utils3);
 
-					@Override
-					public String call() throws Exception {
+		t1.start();
+		t2.start();
+		t3.start();
 
-						if (t == Type.GOOD || t == Type.FAST || t == Type.NICE) {
-							System.out.println(count++);
-							utils.getSimilarityWord(t);
-						}
-						if (t == Type.BAD || t == Type.SLOW || t == Type.UGLY) {
-							System.out.println(count++);
-							utils.getAntonymyWord(t);
-						}
-						return "OK";
-					}
-				}).get(10, TimeUnit.SECONDS);
-			} catch (InterruptedException e) {
-			} catch (ExecutionException e) {
-			} catch (TimeoutException e) {
-			}
-
-		}
-
-		// List<Word> p = utils.getSimilarityWord(Type.GOOD);
-		// List<Word> n = utils.getAntonymyWord(Type.BAD);
 	}
 
 }
