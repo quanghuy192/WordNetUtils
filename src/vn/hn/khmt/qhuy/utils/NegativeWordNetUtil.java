@@ -7,44 +7,33 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-public class NegativeWordNetUtil implements Runnable {
+public class NegativeWordNetUtil {
 
-	public static final String BASE_NEGATIVE_WORDNET_LINK = "http://viet.wordnet.vn/wnms/visualize/xml/1699-1699-14444";
-
+	public static final String BASE_NEGATIVE_WORDNET_LINK = "http://viet.wordnet.vn/wnms/visualize/xml/1699-1699-2057";
 	private final String SIMILARITY_LABEL = "tương tự";
-
 	private final String NEGATIVE_WORDNET_FILE = "negative.txt";
-
+	private String negative_word_wordnet_link = "";
 	private Document document;
-
 	private List<Word> wordnetForNegative;
-
 	private boolean isFirstTimeGoodWord = true;
-
 	private FileWriter writer;
 	private BufferedWriter bufferedWriter;
 
-	private NegativeWordNetUtil(Type positiveType, Type negativeType) {
-
-		setSourceType(positiveType, negativeType);
+	public NegativeWordNetUtil() {
+		setSourceType();
 	}
 
-	public void setSourceType(Type positiveType, Type negativeType) {
+	public void setSourceType() {
 
 		// Init list
 		wordnetForNegative = new ArrayList<>();
+		negative_word_wordnet_link = BASE_NEGATIVE_WORDNET_LINK;
 
 		// init for write output wordnet file
 		try {
@@ -63,7 +52,7 @@ public class NegativeWordNetUtil implements Runnable {
 
 	void setUrlSource() {
 		try {
-			document = Jsoup.connect(BASE_NEGATIVE_WORDNET_LINK).maxBodySize(0).timeout(600000).userAgent("Mozilla")
+			document = Jsoup.connect(negative_word_wordnet_link).maxBodySize(0).timeout(600000).userAgent("Mozilla")
 					.get();
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -97,7 +86,6 @@ public class NegativeWordNetUtil implements Runnable {
 			}
 
 			Elements elementsSense = document.select(conditionId);
-
 			Word word = null;
 
 			for (Element e : elementsSense) {
@@ -148,18 +136,7 @@ public class NegativeWordNetUtil implements Runnable {
 		return null;
 	}
 
-	private Word getAntonymyNeiborWord() {
-
-		for (Word word : wordnetForNegative) {
-			if (!word.isCheck()) {
-				word.setCheck(true);
-				return word;
-			}
-		}
-		return null;
-	}
-
-	private List<Word> getSimilarityWord() {
+	public List<Word> getSimilarityWord() {
 
 		// Get default word
 		List<Word> similarityWordList = getSimilarityWordList();
@@ -206,38 +183,4 @@ public class NegativeWordNetUtil implements Runnable {
 			e.printStackTrace();
 		}
 	}
-
-	static int count = 0;
-
-	@Override
-	public void run() {
-
-		Thread t1 = new Thread(new Runnable() {
-
-			@Override
-			public void run() {
-				getSimilarityWord();
-			}
-		});
-
-		t1.start();
-	}
-
-	public static void main(String[] args) {
-
-		WordNetUtils utils1 = new WordNetUtils(Type.GOOD, Type.BAD);
-		WordNetUtils utils2 = new WordNetUtils(Type.FAST, Type.SLOW);
-		WordNetUtils utils3 = new WordNetUtils(Type.NICE, Type.UGLY);
-
-		Thread t1, t2, t3;
-		t1 = new Thread(utils1);
-		t2 = new Thread(utils2);
-		t3 = new Thread(utils3);
-
-		t1.start();
-		t2.start();
-		t3.start();
-
-	}
-
 }

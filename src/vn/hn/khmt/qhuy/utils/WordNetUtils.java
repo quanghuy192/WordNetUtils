@@ -7,12 +7,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -141,15 +135,15 @@ public class WordNetUtils implements Runnable {
 		}
 	}
 
-//	private String getWordNetBodyLink() {
-//		if (type1 == Type.GOOD || type1 == Type.FAST || type1 == Type.NICE) {
-//			return documentForGood.select("pre[class=brush: xml]").text();
-//		}
-//		if (type2 == Type.BAD || type2 == Type.SLOW || type2 == Type.UGLY) {
-//			return documentForBad.select("pre[class=brush: xml]").text();
-//		}
-//		return BLANK;
-//	}
+	// private String getWordNetBodyLink() {
+	// if (type1 == Type.GOOD || type1 == Type.FAST || type1 == Type.NICE) {
+	// return documentForGood.select("pre[class=brush: xml]").text();
+	// }
+	// if (type2 == Type.BAD || type2 == Type.SLOW || type2 == Type.UGLY) {
+	// return documentForBad.select("pre[class=brush: xml]").text();
+	// }
+	// return BLANK;
+	// }
 
 	private String getUnscapeCharLink(String link) {
 		String linkRemoveLT = link.replaceAll("&lt;", "<");
@@ -390,7 +384,7 @@ public class WordNetUtils implements Runnable {
 				getAntonymyWord();
 			}
 		});
-		
+
 		t1.start();
 		t2.start();
 
@@ -433,18 +427,21 @@ public class WordNetUtils implements Runnable {
 		// // List<Word> p = utils.getSimilarityWord(Type.GOOD);
 		// // List<Word> n = utils.getAntonymyWord(Type.BAD);
 
-		WordNetUtils utils1 = new WordNetUtils(Type.GOOD, Type.BAD);
-		WordNetUtils utils2 = new WordNetUtils(Type.FAST, Type.SLOW);
-		WordNetUtils utils3 = new WordNetUtils(Type.NICE, Type.UGLY);
+		// WordNetUtils utils1 = new WordNetUtils(Type.GOOD, Type.BAD);
+		// WordNetUtils utils2 = new WordNetUtils(Type.FAST, Type.SLOW);
+		// WordNetUtils utils3 = new WordNetUtils(Type.NICE, Type.UGLY);
+
+		NegativeWordNetUtil n = new NegativeWordNetUtil();
+		n.getSimilarityWord();
 
 		Thread t1, t2, t3;
-		t1 = new Thread(utils1);
-		t2 = new Thread(utils2);
-		t3 = new Thread(utils3);
+		// t1 = new Thread(utils1);
+		// t2 = new Thread(utils2);
+		// t3 = new Thread(utils3);
 
-		t1.start();
-		t2.start();
-		t3.start();
+		// t1.start();
+		// t2.start();
+		// t3.start();
 
 	}
 
