@@ -15,7 +15,7 @@ import org.jsoup.select.Elements;
 
 public class NegativeWordNetUtil {
 
-	public static final String BASE_NEGATIVE_WORDNET_LINK = "http://viet.wordnet.vn/wnms/visualize/xml/1699-1699-2057";
+	public static final String BASE_NEGATIVE_WORDNET_LINK = "http://viet.wordnet.vn/wnms/visualize/xml/1699-1699-10333";
 	private final String SIMILARITY_LABEL = "tương tự";
 	private final String NEGATIVE_WORDNET_FILE = "negative.txt";
 	private String negative_word_wordnet_link = "";
